@@ -316,7 +316,7 @@ func (r *WebhookResource) ImportState(ctx context.Context, req resource.ImportSt
 		resource = idParts[0]
 		importType = "id"
 	} else {
-		if len(idParts) != 3 || idParts[0] == "" || idParts[1] == "" || idParts[2] == "" {
+		if idParts[0] == "" || idParts[1] == "" || idParts[2] == "" {
 			resp.Diagnostics.AddError(
 				"Unexpected Import Identifier",
 				fmt.Sprintf("Expected import identifier with format: <channel|guild>/<channel_id|guild_id>/<name> or <id>. Got: %q", req.ID),
@@ -351,8 +351,27 @@ func (r *WebhookResource) ImportState(ctx context.Context, req resource.ImportSt
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("guild_id"), types.StringValue(guildID))...)
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("name"), types.StringValue(resource))...)
 	} else if importType == "channel" {
-		// Set the channel ID and resource name
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("channel_id"), types.StringValue(channelID))...)
+		if discord.IsSnowflake(channelID) {
+			resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("channel_id"), types.StringValue(channelID))...)
+		} else {
+
+			guildID = idParts[1]
+			channelID = idParts[2]
+			resource = idParts[3]
+
+			// Input is a channel name, fetch the channel ID
+			channel, err := discord.FetchChannelByName(ctx, r.client, guildID, channelID)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Failed to import state",
+					err.Error(),
+				)
+				return
+			}
+
+			resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("channel_id"), types.StringValue(channel.ID))...)
+		}
+
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("name"), types.StringValue(resource))...)
 	} else if importType == "id" {
 		// Set the resource ID
