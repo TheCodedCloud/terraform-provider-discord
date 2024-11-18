@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/JustARecord/go-discordutils/base/webhook"
+	discord "github.com/JustARecord/go-discordutils/utils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -11,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/discord"
 )
 
 // NewWebhookDataSource is a helper function to simplify the provider implementation.
@@ -112,12 +113,12 @@ func (d *WebhookDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	// Fetch data from the Discord client
 	if id != "" {
-		result, err = discord.FetchWebhookByID(ctx, d.client, id)
+		result, err = webhook.FetchByID(ctx, d.client, id)
 	} else if name != "" {
 		if channel_id != "" {
-			result, err = discord.FetchChannelWebhookByName(ctx, d.client, channel_id, name)
+			result, err = webhook.FetchChannelWebhookByName(ctx, d.client, channel_id, name)
 		} else if guild_id != "" {
-			result, err = discord.FetchGuildWebhookByName(ctx, d.client, guild_id, name)
+			result, err = webhook.FetchGuildWebhookByName(ctx, d.client, guild_id, name)
 		} else {
 			resp.Diagnostics.AddError(
 				fmt.Sprintf("Invalid %s Configuration", datasourceMetadataType),
