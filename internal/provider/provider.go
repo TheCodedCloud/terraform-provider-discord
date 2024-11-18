@@ -17,8 +17,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/channel"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/guild"
+	"github.com/justarecord/terraform-provider-discord/internal/provider/member"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/permissions"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/role"
+	"github.com/justarecord/terraform-provider-discord/internal/provider/role_members"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/webhook"
 )
 
@@ -160,6 +162,7 @@ func (p *DiscordProvider) Resources(ctx context.Context) []func() resource.Resou
 		role.NewRoleResource,
 		permissions.NewPermissionsResource,
 		webhook.NewWebhookResource,
+		role_members.NewRoleMembersResource,
 	}
 }
 
@@ -171,6 +174,8 @@ func (p *DiscordProvider) DataSources(ctx context.Context) []func() datasource.D
 		role.NewRoleDataSource,
 		permissions.NewPermissionsDataSource,
 		webhook.NewWebhookDataSource,
+		member.NewMemberDataSource,
+		role_members.NewRoleMembersDataSource,
 	}
 }
 
