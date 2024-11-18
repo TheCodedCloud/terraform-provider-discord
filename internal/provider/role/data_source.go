@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/JustARecord/go-discordutils/base/role"
+	discord "github.com/JustARecord/go-discordutils/utils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -12,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/discord"
 )
 
 // NewRoleDataSource is a helper function to simplify the provider implementation.
@@ -125,9 +126,9 @@ func (d *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 	// Fetch data from the Discord client
 	if id != "" {
-		result, err = discord.FetchRoleByID(ctx, d.client, guild_id, id)
+		result, err = role.FetchByID(ctx, d.client, guild_id, id)
 	} else if name != "" {
-		result, err = discord.FetchRoleByName(ctx, d.client, guild_id, name)
+		result, err = role.FetchByName(ctx, d.client, guild_id, name)
 	} else {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Invalid %s Configuration", datasourceMetadataType),

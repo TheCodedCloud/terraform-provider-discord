@@ -1,15 +1,12 @@
 package channel
 
 import (
-	"context"
-	"fmt"
-
+	discord "github.com/JustARecord/go-discordutils/utils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/discord"
 )
 
 func setupParams(model *ChannelResourceModel) *discordgo.ChannelEdit {
@@ -27,60 +24,6 @@ func setupParams(model *ChannelResourceModel) *discordgo.ChannelEdit {
 	// TODO: implement
 
 	return params
-}
-
-// CreateChannel creates a new channel with the provided model
-func CreateChannel(ctx context.Context, client *discordgo.Session, model *ChannelResourceModel) (*discordgo.Channel, error) {
-	guild_id := model.GuildID.ValueString()
-	name := model.Name.ValueString()
-	channelTypeStr := model.Type.ValueString()
-
-	if channelTypeStr == "" {
-		channelTypeStr = discord.Stringify(discordgo.ChannelTypeGuildText)
-	}
-
-	channelType, ok := common.FetchKeyByValue(discord.ChannelTypes, channelTypeStr)
-	if !ok {
-		return nil, fmt.Errorf("invalid channel type %s", channelTypeStr)
-	}
-
-	// Setup the parameters
-	// TODO: implement
-	// params := setupParams(model, permissions)
-
-	// Create it
-	result, err := client.GuildChannelCreate(guild_id, name, channelType.(discordgo.ChannelType))
-	if err != nil {
-		return nil, err
-	}
-
-	// We also need to update the channel with the rest of the data.
-	// This is because we can't set all the data in the initial creation.
-
-	params := setupParams(model)
-
-	result, err = client.ChannelEdit(result.ID, params)
-	if err != nil {
-		return result, err
-	}
-
-	return result, nil
-}
-
-// UpdateChannel updates the channel with the provided model.
-func UpdateChannel(ctx context.Context, client *discordgo.Session, model *ChannelResourceModel) (*discordgo.Channel, error) {
-	id := model.ID.ValueString()
-
-	// Setup the parameters
-	params := setupParams(model)
-
-	// Update it
-	result, err := client.ChannelEdit(id, params)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 // UpdateModel updates the resource model from the provided data.
@@ -142,30 +85,4 @@ func UpdateModel(result *discordgo.Channel, model, state *ChannelResourceModel) 
 	model.GuildID = state.GuildID
 
 	return nil
-}
-
-// DeleteChannel deletes the channel with the provided state.
-func DeleteChannel(ctx context.Context, client *discordgo.Session, model *ChannelResourceModel) error {
-	var err error
-
-	guild_id := model.GuildID.ValueString()
-
-	// If the ID is set, delete the role by ID.
-	if !model.ID.IsNull() {
-		_, err = client.ChannelDelete(model.ID.ValueString())
-	} else if !model.Name.IsNull() {
-		var channel *discordgo.Channel
-		// If the ID is not set, delete the channel by name.
-
-		// Likely, we shouldn't reach this point as the channel wouldn't be in the Terraform state,
-		// but it's here for completeness.
-		channel, err = discord.FetchChannelByName(ctx, client, guild_id, model.Name.ValueString())
-		if err != nil {
-			return err
-		}
-
-		_, err = client.ChannelDelete(channel.ID)
-	}
-
-	return err
 }

@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/JustARecord/go-discordutils/base/channel"
+	"github.com/JustARecord/go-discordutils/utils"
+	discord "github.com/JustARecord/go-discordutils/utils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -12,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/discord"
 )
 
 // NewChannelDataSource is a helper function to simplify the provider implementation.
@@ -188,7 +190,7 @@ func (d *ChannelDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if id != "" {
 		result, err = d.client.Channel(id)
 	} else if name != "" {
-		result, err = discord.FetchChannelByName(ctx, d.client, guild_id, name)
+		result, err = channel.FetchByName(ctx, d.client, guild_id, name)
 	} else {
 		resp.Diagnostics.AddError(
 			"Invalid Resource Configuration",
@@ -207,7 +209,7 @@ func (d *ChannelDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	children, err := discord.FetchChannelChildren(ctx, d.client, guild_id, result)
+	children, err := channel.FetchChildren(ctx, d.client, guild_id, result)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to get children for %s", datasourceMetadataName),
@@ -219,7 +221,7 @@ func (d *ChannelDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	flags := discord.ListStringify(result.Flags)
+	flags := utils.ListStringify(result.Flags)
 
 	flagsList, diags := common.ToListType[string, basetypes.StringType](flags)
 	resp.Diagnostics.Append(diags...)
@@ -227,7 +229,7 @@ func (d *ChannelDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	appliedTags, diags := common.ToListType[string, basetypes.StringType](result.AppliedTags)
 	resp.Diagnostics.Append(diags...)
 
-	childrenIDs := discord.ChannelNames(children)
+	childrenIDs := channel.Names(children)
 	childrenList, diags := common.ToListType[string, basetypes.StringType](childrenIDs)
 	resp.Diagnostics.Append(diags...)
 

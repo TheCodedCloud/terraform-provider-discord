@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/JustARecord/go-discordutils/base/permissions"
+	discord "github.com/JustARecord/go-discordutils/utils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -12,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/discord"
 )
 
 // NewPermissionsDataSource is a helper function to simplify the provider implementation.
@@ -97,7 +98,7 @@ func (d *PermissionsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	channel_id := provided.ChannelID.ValueString()
 
 	// Fetch data from the Discord client
-	overwrite, err := discord.FetchChannelPermissions(ctx, d.client, guild_id, channel_id, id, permissionsType)
+	overwrite, err := permissions.FetchChannelPermissions(ctx, d.client, guild_id, channel_id, id, permissionsType)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to get %s", datasourceMetadataName),

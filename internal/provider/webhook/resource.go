@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/JustARecord/go-discordutils/base/channel"
+	"github.com/JustARecord/go-discordutils/base/webhook"
+	discord "github.com/JustARecord/go-discordutils/utils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -15,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/discord"
 )
 
 // NewWebhookResource is a helper function to simplify the provider implementation.
@@ -140,7 +142,7 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 	avatar := plan.Avatar.ValueString()
 
 	// Create the resource
-	result, err := discord.CreateWebhook(ctx, r.client, channel_id, name, avatar)
+	result, err := webhook.CreateWebhook(ctx, r.client, channel_id, name, avatar)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to create %s", resourceMetadataName),
@@ -218,7 +220,7 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 	channelId := plan.ChannelID.ValueString()
 
 	// Update the resource
-	result, err := discord.UpdateWebhook(ctx, r.client, id, name, avatar, channelId)
+	result, err := webhook.UpdateWebhook(ctx, r.client, id, name, avatar, channelId)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to update %s", resourceMetadataName),
@@ -286,7 +288,7 @@ func (r *WebhookResource) Delete(ctx context.Context, req resource.DeleteRequest
 	id := state.ID.ValueString()
 
 	// Delete existing resource
-	err := discord.DeleteWebhook(ctx, r.client, id)
+	err := webhook.DeleteWebhook(ctx, r.client, id)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to delete %s", resourceMetadataName),
@@ -360,7 +362,7 @@ func (r *WebhookResource) ImportState(ctx context.Context, req resource.ImportSt
 			resource = idParts[3]
 
 			// Input is a channel name, fetch the channel ID
-			channel, err := discord.FetchChannelByName(ctx, r.client, guildID, channelID)
+			channel, err := channel.FetchByName(ctx, r.client, guildID, channelID)
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Failed to import state",
@@ -421,12 +423,12 @@ func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	// Fetch data from the Discord client
 	if id != "" {
-		result, err = discord.FetchWebhookByID(ctx, r.client, id)
+		result, err = webhook.FetchByID(ctx, r.client, id)
 	} else if name != "" {
 		if channel_id != "" {
-			result, err = discord.FetchChannelWebhookByName(ctx, r.client, channel_id, name)
+			result, err = webhook.FetchChannelWebhookByName(ctx, r.client, channel_id, name)
 		} else if guild_id != "" {
-			result, err = discord.FetchGuildWebhookByName(ctx, r.client, guild_id, name)
+			result, err = webhook.FetchGuildWebhookByName(ctx, r.client, guild_id, name)
 		} else {
 			resp.Diagnostics.AddError(
 				fmt.Sprintf("Invalid %s Configuration", datasourceMetadataType),
