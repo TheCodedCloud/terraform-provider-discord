@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/JustARecord/go-discordutils/base/channel"
+	discord "github.com/JustARecord/go-discordutils/utils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -19,7 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/discord"
 )
 
 // NewRoleResource is a helper function to simplify the provider implementation.
@@ -251,8 +252,14 @@ func (r *ChannelResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
+	guild_id := plan.GuildID.ValueString()
+	name := plan.Name.ValueString()
+	channelTypeStr := plan.Type.ValueString()
+
+	params := setupParams(&plan)
+
 	// Create the resource
-	result, err := CreateChannel(ctx, r.client, &plan)
+	result, err := channel.CreateWithParams(ctx, r.client, guild_id, name, channelTypeStr, params)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to create %s", resourceMetadataName),
@@ -270,7 +277,7 @@ func (r *ChannelResource) Create(ctx context.Context, req resource.CreateRequest
 		resp.Diagnostics.Append(diags...)
 	}
 
-	children, err := discord.FetchChannelChildren(ctx, r.client, plan.GuildID.ValueString(), result)
+	children, err := channel.FetchChildren(ctx, r.client, plan.GuildID.ValueString(), result)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to get children for %s", resourceMetadataName),
@@ -282,7 +289,7 @@ func (r *ChannelResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	childrenIDs := discord.ChannelNames(children)
+	childrenIDs := channel.Names(children)
 	childrenList, diags := common.ToListType[string, basetypes.StringType](childrenIDs)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -346,8 +353,12 @@ func (r *ChannelResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
+	id := plan.ID.ValueString()
+
+	params := setupParams(&plan)
+
 	// Update the resource
-	result, err := UpdateChannel(ctx, r.client, &plan)
+	result, err := channel.UpdateByID(ctx, r.client, id, params)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to update %s", resourceMetadataName),
@@ -366,7 +377,7 @@ func (r *ChannelResource) Update(ctx context.Context, req resource.UpdateRequest
 		resp.Diagnostics.Append(diags...)
 	}
 
-	children, err := discord.FetchChannelChildren(ctx, r.client, plan.GuildID.ValueString(), result)
+	children, err := channel.FetchChildren(ctx, r.client, plan.GuildID.ValueString(), result)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to get children for %s", resourceMetadataName),
@@ -378,7 +389,7 @@ func (r *ChannelResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	childrenIDs := discord.ChannelNames(children)
+	childrenIDs := channel.Names(children)
 	childrenList, diags := common.ToListType[string, basetypes.StringType](childrenIDs)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -436,8 +447,19 @@ func (r *ChannelResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
+	guild_id := state.GuildID.ValueString()
+
+	var err error
+
 	// Delete existing resource
-	err := DeleteChannel(ctx, r.client, &state)
+	if !state.ID.IsNull() {
+		err = channel.DeleteByID(ctx, r.client, state.ID.ValueString())
+	} else if !state.Name.IsNull() {
+		err = channel.DeleteByName(ctx, r.client, guild_id, state.Name.ValueString())
+	} else {
+		err = fmt.Errorf("either the id or the name must be set for the %s %s", resourceMetadataName, resourceMetadataType)
+	}
+
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to delete %s", resourceMetadataName),
@@ -524,9 +546,9 @@ func (r *ChannelResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	// Fetch data from the Discord client
 	if id != "" {
-		result, err = discord.FetchChannelByID(ctx, r.client, guild_id, id)
+		result, err = channel.FetchByID(ctx, r.client, guild_id, id)
 	} else if name != "" {
-		result, err = discord.FetchChannelByName(ctx, r.client, guild_id, name)
+		result, err = channel.FetchByName(ctx, r.client, guild_id, name)
 	} else {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Invalid %s Configuration", resourceMetadataType),
@@ -558,7 +580,7 @@ func (r *ChannelResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	children, err := discord.FetchChannelChildren(ctx, r.client, state.GuildID.ValueString(), result)
+	children, err := channel.FetchChildren(ctx, r.client, state.GuildID.ValueString(), result)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to get children for %s", resourceMetadataName),
@@ -570,7 +592,7 @@ func (r *ChannelResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	childrenIDs := discord.ChannelNames(children)
+	childrenIDs := channel.Names(children)
 	childrenList, diags := common.ToListType[string, basetypes.StringType](childrenIDs)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

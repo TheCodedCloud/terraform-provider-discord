@@ -1,14 +1,12 @@
 package role
 
 import (
-	"context"
-
+	discord "github.com/JustARecord/go-discordutils/utils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/discord"
 )
 
 func setupParams(model *RoleResourceModel, permissions []string) *discordgo.RoleParams {
@@ -44,39 +42,6 @@ func setupParams(model *RoleResourceModel, permissions []string) *discordgo.Role
 	}
 
 	return roleParams
-}
-
-// CreateRole creates a new role with the provided name and color.
-func CreateRole(ctx context.Context, client *discordgo.Session, model *RoleResourceModel, permissions []string) (*discordgo.Role, error) {
-	guild_id := model.GuildID.ValueString()
-
-	// Setup the role parameters
-	roleParams := setupParams(model, permissions)
-
-	// Create the role
-	role, err := client.GuildRoleCreate(guild_id, roleParams)
-	if err != nil {
-		return nil, err
-	}
-
-	return role, nil
-}
-
-// UpdateRole updates the role with the provided role model.
-func UpdateRole(ctx context.Context, client *discordgo.Session, model *RoleResourceModel, permissions []string) (*discordgo.Role, error) {
-	guild_id := model.GuildID.ValueString()
-	role_id := model.ID.ValueString()
-
-	// Setup the role parameters
-	roleParams := setupParams(model, permissions)
-
-	// Update the role
-	role, err := client.GuildRoleEdit(guild_id, role_id, roleParams)
-	if err != nil {
-		return nil, err
-	}
-
-	return role, nil
 }
 
 // UpdateModel updates the role resource model with the provided role.
@@ -130,30 +95,4 @@ func UpdateModel(role *discordgo.Role, model, state *RoleResourceModel) diag.Dia
 	model.GuildID = state.GuildID
 
 	return nil
-}
-
-// DeleteRole deletes the role with the provided state.
-func DeleteRole(ctx context.Context, client *discordgo.Session, model *RoleResourceModel) error {
-	var err error
-
-	guild_id := model.GuildID.ValueString()
-
-	// If the ID is set, delete the role by ID.
-	if !model.ID.IsNull() {
-		err = client.GuildRoleDelete(guild_id, model.ID.ValueString())
-	} else if !model.Name.IsNull() {
-		var role *discordgo.Role
-		// If the ID is not set, delete the role by name.
-
-		// Likely, we shouldn't reach this point as the role wouldn't be in the Terraform state,
-		// but it's here for completeness.
-		role, err = discord.FetchRoleByName(ctx, client, guild_id, model.Name.ValueString())
-		if err != nil {
-			return err
-		}
-
-		err = client.GuildRoleDelete(guild_id, role.ID)
-	}
-
-	return err
 }

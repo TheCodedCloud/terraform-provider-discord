@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/JustARecord/go-discordutils/base/role"
+	discord "github.com/JustARecord/go-discordutils/utils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -18,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/discord"
 )
 
 // NewRoleResource is a helper function to simplify the provider implementation.
@@ -180,8 +181,13 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
+	guild_id := plan.GuildID.ValueString()
+
+	// Setup the role parameters
+	roleParams := setupParams(&plan, permissions)
+
 	// Create the resource
-	result, err := CreateRole(ctx, r.client, &plan, permissions)
+	result, err := role.Create(ctx, r.client, guild_id, roleParams)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to create %s", resourceMetadataName),
@@ -266,8 +272,13 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
+	guild_id := plan.GuildID.ValueString()
+
+	// Setup the role parameters
+	roleParams := setupParams(&plan, permissions)
+
 	// Update the resource
-	result, err := UpdateRole(ctx, r.client, &plan, permissions)
+	result, err := role.UpdateByID(ctx, r.client, guild_id, state.ID.ValueString(), roleParams)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to update %s", resourceMetadataName),
@@ -335,7 +346,23 @@ func (r *RoleResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 	}
 
 	// Delete existing resource
-	err := DeleteRole(ctx, r.client, &state)
+	guild_id := state.GuildID.ValueString()
+
+	var err error
+
+	// If the ID is set, delete the role by ID.
+	if !state.ID.IsNull() {
+		err = role.DeleteByID(ctx, r.client, guild_id, state.ID.ValueString())
+	} else if !state.Name.IsNull() {
+		// If the ID is not set, delete the role by name.
+
+		// Likely, we shouldn't reach this point as the role wouldn't be in the Terraform state,
+		// but it's here for completeness.
+		err = role.DeleteByName(ctx, r.client, guild_id, state.Name.ValueString())
+	} else {
+		err = fmt.Errorf("either the id or the name must be set for the %s %s", resourceMetadataName, resourceMetadataType)
+	}
+
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to delete %s", resourceMetadataName),
@@ -421,9 +448,9 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	// Fetch data from the Discord client
 	if id != "" {
-		result, err = discord.FetchRoleByID(ctx, r.client, guild_id, id)
+		result, err = role.FetchByID(ctx, r.client, guild_id, id)
 	} else if name != "" {
-		result, err = discord.FetchRoleByName(ctx, r.client, guild_id, name)
+		result, err = role.FetchByName(ctx, r.client, guild_id, name)
 	} else {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Invalid %s Configuration", resourceMetadataType),

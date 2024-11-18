@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/JustARecord/go-discordutils/base/permissions"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -16,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/discord"
 )
 
 // NewPermissionsResource is a helper function to simplify the provider implementation.
@@ -127,7 +127,7 @@ func (r *PermissionsResource) Create(ctx context.Context, req resource.CreateReq
 	sort.Strings(deny)
 
 	// Create the resource
-	result, err := discord.CreatePermissionOverwrite(ctx, r.client, guild_id, channel_id, id, permissionsType, allow, deny)
+	result, err := permissions.CreatePermissionOverwrite(ctx, r.client, guild_id, channel_id, id, permissionsType, allow, deny)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to create %s", resourceMetadataName),
@@ -226,7 +226,7 @@ func (r *PermissionsResource) Update(ctx context.Context, req resource.UpdateReq
 	sort.Strings(deny)
 
 	// Update the resource
-	result, err := discord.UpdatePermissionOverwrite(ctx, r.client, guild_id, channel_id, id, permissionsType, allow, deny)
+	result, err := permissions.UpdatePermissionOverwrite(ctx, r.client, guild_id, channel_id, id, permissionsType, allow, deny)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to update %s", resourceMetadataName),
@@ -300,7 +300,7 @@ func (r *PermissionsResource) Delete(ctx context.Context, req resource.DeleteReq
 	channel_id := state.ChannelID.ValueString()
 
 	// Delete existing resource
-	err := discord.DeletePermissionOverwrite(ctx, r.client, guild_id, channel_id, id, permissionsType)
+	err := permissions.DeletePermissionOverwrite(ctx, r.client, guild_id, channel_id, id, permissionsType)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Failed to delete %s", resourceMetadataName),
@@ -387,7 +387,7 @@ func (r *PermissionsResource) Read(ctx context.Context, req resource.ReadRequest
 	channel_id := provided.ChannelID.ValueString()
 
 	// Fetch data from the Discord client
-	result, err := discord.FetchChannelPermissions(ctx, r.client, guild_id, channel_id, id, permissionsType)
+	result, err := permissions.FetchChannelPermissions(ctx, r.client, guild_id, channel_id, id, permissionsType)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "permission overwrite not found") {
 			// If the resource is not found, force a recreation and return early
