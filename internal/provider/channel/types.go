@@ -34,10 +34,6 @@ type ChannelDataSourceModel struct {
 	// Whether the channel is marked as NSFW.
 	NSFW types.Bool `tfsdk:"nsfw"`
 
-	// The ID of the last message sent in the channel. This is not
-	// guaranteed to be an ID of a valid message.
-	LastMessageID types.String `tfsdk:"last_message_id"`
-
 	// The bitrate of the channel, if it is a voice channel.
 	Bitrate types.Int32 `tfsdk:"bitrate"`
 
@@ -66,6 +62,9 @@ type ChannelDataSourceModel struct {
 
 	// The ID of the parent channel, if the channel is under a category. For threads - id of the channel thread was created in.
 	ParentID types.String `tfsdk:"parent_id"`
+
+	// The IDs of the child channels of the category, if the channel is a category.
+	Children types.List `tfsdk:"children"`
 
 	// The timestamp of the last pinned message in the channel.
 	// nil if the channel has no pinned messages.
