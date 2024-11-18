@@ -59,10 +59,6 @@ func (d *ChannelDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 				Description: "Whether the channel is marked as NSFW.",
 				Computed:    true,
 			},
-			"last_message_id": schema.StringAttribute{
-				Description: "The ID of the last message sent in the channel.",
-				Computed:    true,
-			},
 			"bitrate": schema.Int32Attribute{
 				Description: "The bitrate of the channel, if it is a voice channel.",
 				Computed:    true,
@@ -94,6 +90,11 @@ func (d *ChannelDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 			"parent_id": schema.StringAttribute{
 				Description: "The ID of the parent category for a channel.",
 				Computed:    true,
+			},
+			"children": schema.ListAttribute{
+				Description: "The IDs of the child channels of the category, if the channel is a category.",
+				Computed:    true,
+				ElementType: types.StringType,
 			},
 			"last_pin_timestamp": schema.StringAttribute{
 				Description: "The timestamp of the last pinned message in the channel.",
@@ -206,12 +207,28 @@ func (d *ChannelDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
+	children, err := discord.FetchChannelChildren(ctx, d.client, guild_id, result)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("Failed to get children for %s", datasourceMetadataName),
+			err.Error(),
+		)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	flags := discord.ListStringify(result.Flags)
 
 	flagsList, diags := common.ToListType[string, basetypes.StringType](flags)
 	resp.Diagnostics.Append(diags...)
 
 	appliedTags, diags := common.ToListType[string, basetypes.StringType](result.AppliedTags)
+	resp.Diagnostics.Append(diags...)
+
+	childrenIDs := discord.ChannelNames(children)
+	childrenList, diags := common.ToListType[string, basetypes.StringType](childrenIDs)
 	resp.Diagnostics.Append(diags...)
 
 	// availableTags, diags := common.ToListType(channel.AvailableTags)
@@ -232,7 +249,6 @@ func (d *ChannelDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		Name:             types.StringValue(result.Name),
 		Topic:            types.StringValue(result.Topic),
 		NSFW:             types.BoolValue(result.NSFW),
-		LastMessageID:    types.StringValue(result.LastMessageID),
 		Bitrate:          types.Int32Value(int32(result.Bitrate)),
 		UserLimit:        types.Int32Value(int32(result.UserLimit)),
 		RateLimitPerUser: types.Int32Value(int32(result.RateLimitPerUser)),
@@ -241,6 +257,7 @@ func (d *ChannelDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		ApplicationID:    types.StringValue(result.ApplicationID),
 		// Managed:                       types.BoolValue(channel.Managed),
 		ParentID:         types.StringValue(result.ParentID),
+		Children:         childrenList,
 		LastPinTimestamp: types.StringValue(common.StrDiscordTime(result.LastPinTimestamp, "ISO8601")),
 		// ThreadMetadata:   threadMetadata,
 		// ThreadMember:                  common.ThreadMemberValue(channel.ThreadMember),

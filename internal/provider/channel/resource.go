@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
 	"github.com/justarecord/terraform-provider-discord/internal/provider/discord"
@@ -90,13 +91,6 @@ func (r *ChannelResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					boolplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"last_message_id": schema.StringAttribute{
-				Description: "The ID of the last message sent in the channel.",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
 			"bitrate": schema.Int32Attribute{
 				Description: "The bitrate of the channel, if it is a voice channel.",
 				Computed:    true,
@@ -149,6 +143,14 @@ func (r *ChannelResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"children": schema.ListAttribute{
+				Description: "The IDs of the child channels of the category, if the channel is a category.",
+				Computed:    true,
+				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"last_pin_timestamp": schema.StringAttribute{
@@ -268,6 +270,28 @@ func (r *ChannelResource) Create(ctx context.Context, req resource.CreateRequest
 		resp.Diagnostics.Append(diags...)
 	}
 
+	children, err := discord.FetchChannelChildren(ctx, r.client, plan.GuildID.ValueString(), result)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("Failed to get children for %s", resourceMetadataName),
+			err.Error(),
+		)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	childrenIDs := discord.ChannelNames(children)
+	childrenList, diags := common.ToListType[string, basetypes.StringType](childrenIDs)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Set the children
+	plan.Children = childrenList
+
 	// Set the LastUpdated field to the current time.
 	plan.LastUpdated = types.StringValue(common.CurrentTime())
 
@@ -341,6 +365,28 @@ func (r *ChannelResource) Update(ctx context.Context, req resource.UpdateRequest
 	if diags := UpdateModel(result, &plan, nil); diags != nil {
 		resp.Diagnostics.Append(diags...)
 	}
+
+	children, err := discord.FetchChannelChildren(ctx, r.client, plan.GuildID.ValueString(), result)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("Failed to get children for %s", resourceMetadataName),
+			err.Error(),
+		)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	childrenIDs := discord.ChannelNames(children)
+	childrenList, diags := common.ToListType[string, basetypes.StringType](childrenIDs)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Set the children
+	plan.Children = childrenList
 
 	// Set the LastUpdated field to the current time.
 	plan.LastUpdated = types.StringValue(common.CurrentTime())
@@ -511,6 +557,28 @@ func (r *ChannelResource) Read(ctx context.Context, req resource.ReadRequest, re
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	children, err := discord.FetchChannelChildren(ctx, r.client, state.GuildID.ValueString(), result)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("Failed to get children for %s", resourceMetadataName),
+			err.Error(),
+		)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	childrenIDs := discord.ChannelNames(children)
+	childrenList, diags := common.ToListType[string, basetypes.StringType](childrenIDs)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Set the children
+	state.Children = childrenList
 
 	// Revert last_updated to the plan value
 	if !provided.LastUpdated.IsNull() {
