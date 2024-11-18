@@ -22,11 +22,6 @@ resource "discord_channel" "testing" {
   name     = "testing"
 }
 
-data "discord_role" "admins" {
-  guild_id = data.discord_guild.merchtracker_dev.id
-  name     = "admins"
-}
-
 resource "discord_role" "tf_testing" {
   guild_id    = data.discord_guild.merchtracker_dev.id
   name        = "tf_testing"
@@ -80,9 +75,37 @@ resource "discord_permissions" "testing" {
   ]
 }
 
-data "discord_permissions" "admins" {
-  guild_id   = data.discord_guild.merchtracker_dev.id
-  channel_id = data.discord_channel.logs.id
-  id         = data.discord_role.admins.id
-  type       = "role"
+data "discord_guild" "merchtracker" {
+  name = "MerchTracker"
+}
+
+data "discord_member" "member" {
+  guild_id = data.discord_guild.merchtracker_dev.id
+  username = "swiftsudo"
+}
+
+resource "discord_role_members" "testing" {
+  guild_id = data.discord_guild.merchtracker_dev.id
+  role_id  = resource.discord_role.testing.id
+  members = [
+    "swiftsudo",
+  ]
+}
+
+output "role_members" {
+  value = resource.discord_role_members.testing
+}
+
+output "member" {
+  value = data.discord_member.member
+}
+
+data "discord_channel" "category" {
+  guild_id = data.discord_guild.merchtracker_dev.id
+  name     = "artists: us"
+}
+
+output "category_children" {
+  # Number of children in the category
+  value = length(data.discord_channel.category.children)
 }
