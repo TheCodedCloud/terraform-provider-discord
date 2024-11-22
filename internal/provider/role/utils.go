@@ -16,8 +16,10 @@ func setupParams(model *RoleResourceModel, permissions []string) *discordgo.Role
 		Name: name,
 	}
 
-	permissionsSum := discord.CalcPermissions(permissions)
-	roleParams.Permissions = &permissionsSum
+	if len(permissions) > 0 {
+		permissionsSum := discord.CalcPermissions(permissions)
+		roleParams.Permissions = &permissionsSum
+	}
 
 	// Set optional parameters
 	if !model.Color.IsNull() {
