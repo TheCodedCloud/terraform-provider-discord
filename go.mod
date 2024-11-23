@@ -3,7 +3,7 @@ module github.com/justarecord/terraform-provider-discord
 go 1.23.3
 
 require (
-	github.com/JustARecord/go-discordutils v0.0.0-20241118075113-e1e5e8d01191
+	github.com/JustARecord/go-discordutils v0.0.0-20241130212636-958d94aaf8a5
 	github.com/hashicorp/terraform-plugin-docs v0.19.4
 	github.com/hashicorp/terraform-plugin-framework v1.11.0
 	github.com/hashicorp/terraform-plugin-go v0.23.0
@@ -15,6 +15,7 @@ require (
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/samber/lo v1.47.0 // indirect
 	github.com/schollz/progressbar/v3 v3.17.1 // indirect
 	golang.org/x/term v0.26.0 // indirect
 )
