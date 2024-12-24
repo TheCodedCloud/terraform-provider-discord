@@ -30,6 +30,8 @@ github.com/JustARecord/go-discordutils v0.0.0-20241130212636-958d94aaf8a5 h1:qv2
 github.com/JustARecord/go-discordutils v0.0.0-20241130212636-958d94aaf8a5/go.mod h1:YXQ59aW5wGV0LovG06KnDbNxq6/wYOU9ijBw9RSXSLo=
 github.com/JustARecord/go-discordutils v0.0.0-20241217075648-ffb93ac4c8b0 h1:2b7oP37lcjk1A17Unl625NAldRjuzDglFC3ZPvcM2+A=
 github.com/JustARecord/go-discordutils v0.0.0-20241217075648-ffb93ac4c8b0/go.mod h1:YXQ59aW5wGV0LovG06KnDbNxq6/wYOU9ijBw9RSXSLo=
+github.com/JustARecord/go-discordutils v0.0.0-20241224042439-2345c796bb24 h1:uIpMpSizru7sz8+3j/4U8gFGzJ9StAosdaRK6/zDVSw=
+github.com/JustARecord/go-discordutils v0.0.0-20241224042439-2345c796bb24/go.mod h1:+FkNxkzVxEUVJhk5K7EIPArkKc1AOuwo3MIF9La9lrw=
 github.com/Kunde21/markdownfmt/v3 v3.1.0 h1:KiZu9LKs+wFFBQKhrZJrFZwtLnCCWJahL+S+E/3VnM0=
 github.com/Kunde21/markdownfmt/v3 v3.1.0/go.mod h1:tPXN1RTyOzJwhfHoon9wUr4HGYmWgVxSQN6VBJDkrVc=
 github.com/Masterminds/goutils v1.1.1 h1:5nUrii3FMTL5diU80unEVvNevw1nH4+ZV4DSLVJLSYI=
