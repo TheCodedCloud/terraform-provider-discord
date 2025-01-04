@@ -3,7 +3,7 @@ module github.com/justarecord/terraform-provider-discord
 go 1.23.3
 
 require (
-	github.com/JustARecord/go-discordutils v0.0.0-20250104081847-b4cec41f9ef8
+	github.com/JustARecord/go-discordutils v0.0.0-20250104083142-1500254d9014
 	github.com/hashicorp/terraform-plugin-docs v0.19.4
 	github.com/hashicorp/terraform-plugin-framework v1.11.0
 	github.com/hashicorp/terraform-plugin-go v0.23.0
