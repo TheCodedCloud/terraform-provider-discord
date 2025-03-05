@@ -163,6 +163,9 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 	// Set the LastUpdated field to the current time.
 	plan.LastUpdated = types.StringValue(common.CurrentTime())
 
+	// Set the Avatar field to the base64 encoded image.
+	plan.Avatar = types.StringValue(result.Avatar)
+
 	tflog.Info(ctx, fmt.Sprintf("Updated plan %s %s: %v", resourceMetadataName, resourceMetadataType, plan))
 
 	if resp.Diagnostics.HasError() {
@@ -458,6 +461,9 @@ func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 	if diags := UpdateModel(ctx, result, &provided, nil); diags != nil {
 		resp.Diagnostics.Append(diags...)
 	}
+
+	// Update the Avatar attribute
+	provided.Avatar = types.StringValue(result.Avatar)
 
 	tflog.Info(ctx, fmt.Sprintf("Updated provided %s %s: %v", resourceMetadataName, resourceMetadataType, provided))
 
