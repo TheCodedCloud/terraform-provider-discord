@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
+	"github.com/thecodedcloud/terraform-provider-discord/internal/provider/common"
 )
 
 // NewWebhookResource is a helper function to simplify the provider implementation.

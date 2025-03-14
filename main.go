@@ -9,7 +9,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/justarecord/terraform-provider-discord/internal/provider"
+	"github.com/thecodedcloud/terraform-provider-discord/internal/provider"
 )
 
 // Run "go generate" to format example terraform files and generate the docs for the registry/website
@@ -32,7 +32,7 @@ var (
 )
 
 const (
-	providerName = "registry.terraform.io/justarecord/discord"
+	providerName = "registry.terraform.io/thecodedcloud/discord"
 )
 
 func main() {

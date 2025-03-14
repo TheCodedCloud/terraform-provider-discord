@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
+	"github.com/thecodedcloud/terraform-provider-discord/internal/provider/common"
 )
 
 // UpdateModel updates the role resource model with the provided role.

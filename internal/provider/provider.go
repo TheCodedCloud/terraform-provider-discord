@@ -15,13 +15,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/channel"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/guild"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/member"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/permissions"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/role"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/role_members"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/webhook"
+	"github.com/thecodedcloud/terraform-provider-discord/internal/provider/channel"
+	"github.com/thecodedcloud/terraform-provider-discord/internal/provider/guild"
+	"github.com/thecodedcloud/terraform-provider-discord/internal/provider/member"
+	"github.com/thecodedcloud/terraform-provider-discord/internal/provider/permissions"
+	"github.com/thecodedcloud/terraform-provider-discord/internal/provider/role"
+	"github.com/thecodedcloud/terraform-provider-discord/internal/provider/role_members"
+	"github.com/thecodedcloud/terraform-provider-discord/internal/provider/webhook"
 )
 
 // Ensure DiscordProvider satisfies various provider interfaces.

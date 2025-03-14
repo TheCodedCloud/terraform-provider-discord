@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/justarecord/terraform-provider-discord/internal/provider/common"
+	"github.com/thecodedcloud/terraform-provider-discord/internal/provider/common"
 )
 
 // UpdateModel updates the plan model with the latest data.

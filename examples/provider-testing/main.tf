@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     discord = {
-      source = "registry.terraform.io/justarecord/discord"
+      source = "registry.terraform.io/thecodedcloud/discord"
     }
   }
 }
