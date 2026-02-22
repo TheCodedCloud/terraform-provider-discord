@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-// TypeFromValue converts an input to its type
+// TypeFromValue converts an input to its type.
 func TypeFromValue(v interface{}) attr.Type {
 	switch v := reflect.ValueOf(v); v.Kind() {
 	case reflect.String:
@@ -30,7 +30,7 @@ func TypeFromValue(v interface{}) attr.Type {
 	}
 }
 
-// ValueFromValue converts an input to its value
+// ValueFromValue converts an input to its value.
 func ValueFromValue(v interface{}) attr.Value {
 	switch v := reflect.ValueOf(v); v.Kind() {
 	case reflect.String:
@@ -49,7 +49,7 @@ func ValueFromValue(v interface{}) attr.Value {
 }
 
 // StructToAttrValues converts a struct to a map of attribute types and values.
-// This iterates over the fields of the struct and extracts the values and types
+// StructToAttrValues iterates over the fields of the struct and extracts the values and types.
 func StructToAttrValues(s interface{}) (map[string]attr.Type, map[string]attr.Value) {
 	t := reflect.TypeOf(s)
 	v := reflect.ValueOf(s)
@@ -144,7 +144,8 @@ func CheckRequired(ctx context.Context, fields map[string]attr.Value, diags diag
 
 		switch value.Type(ctx) {
 		case basetypes.StringType{}:
-			if value.(basetypes.StringValue).ValueString() == "" {
+			s, ok := value.(basetypes.StringValue)
+			if ok && s.ValueString() == "" {
 				diags.AddError(
 					fmt.Sprintf("%s is empty", field),
 					fmt.Sprintf("%s must be set for the %s %s.", field, metadataName, typeName),
@@ -163,7 +164,8 @@ func CheckRequired(ctx context.Context, fields map[string]attr.Value, diags diag
 	for _, key := range optionalKeys {
 		switch fields[key].Type(ctx) {
 		case basetypes.StringType{}:
-			if fields[key].(basetypes.StringValue).ValueString() == "" {
+			s, ok := fields[key].(basetypes.StringValue)
+			if ok && s.ValueString() == "" {
 				allEmpty = true
 			}
 		default:
@@ -197,7 +199,7 @@ func ToTypeValue[K comparable](s K) (attr.Type, attr.Value) {
 	}
 }
 
-// ToAttrList converts a list of strings to a []attr.Value
+// ToAttrList converts a list of strings to a []attr.Value.
 func ToAttrList[K comparable](list []K) []attr.Value {
 	values := make([]attr.Value, len(list))
 

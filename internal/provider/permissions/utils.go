@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	discord "github.com/JustARecord/go-discordutils/utils"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
 )
 
 // UpdateModel updates the plan model with the latest data.

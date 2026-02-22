@@ -4,11 +4,11 @@ import (
 	"context"
 
 	discord "github.com/JustARecord/go-discordutils/utils"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
 )
 
 // ToUser converts a discordgo.User to a User.

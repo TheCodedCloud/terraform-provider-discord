@@ -7,6 +7,7 @@ import (
 
 	"github.com/JustARecord/go-discordutils/base/channel"
 	discord "github.com/JustARecord/go-discordutils/utils"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -20,7 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
 )
 
 // NewRoleResource is a helper function to simplify the provider implementation.

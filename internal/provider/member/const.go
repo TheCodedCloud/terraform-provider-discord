@@ -15,10 +15,10 @@ var (
 	_ datasource.DataSourceWithConfigure = &MemberDataSource{}
 )
 
-const (
-	resourceMetadataName = "member"
-	resourceMetadataType = "resource"
-)
+// const (
+// 	resourceMetadataName = "member"
+// 	resourceMetadataType = "resource"
+// )
 
 // // Ensure the implementation satisfies the expected interfaces.
 // var (

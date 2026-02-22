@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/JustARecord/go-discordutils/base/channel"
-	"github.com/JustARecord/go-discordutils/utils"
 	discord "github.com/JustARecord/go-discordutils/utils"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
 )
 
 // NewChannelDataSource is a helper function to simplify the provider implementation.
@@ -221,7 +220,7 @@ func (d *ChannelDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	flags := utils.ListStringify(result.Flags)
+	flags := discord.ListStringify(result.Flags)
 
 	flagsList, diags := common.ToListType[string, basetypes.StringType](flags)
 	resp.Diagnostics.Append(diags...)

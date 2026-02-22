@@ -66,7 +66,7 @@ type MemberDataSourceModel struct {
 
 // MemberResource defines the resource implementation.
 type MemberResource struct {
-	client *discordgo.Session
+	client *discordgo.Session //nolint:unused // reserved for future Member resource implementation
 }
 
 // MemberResourceModel maps the resource schema data.

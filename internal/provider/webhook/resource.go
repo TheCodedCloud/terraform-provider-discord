@@ -8,6 +8,7 @@ import (
 	"github.com/JustARecord/go-discordutils/base/channel"
 	"github.com/JustARecord/go-discordutils/base/webhook"
 	discord "github.com/JustARecord/go-discordutils/utils"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -17,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
 )
 
 // NewWebhookResource is a helper function to simplify the provider implementation.
@@ -351,11 +351,12 @@ func (r *WebhookResource) ImportState(ctx context.Context, req resource.ImportSt
 	}
 
 	// Set the state
-	if importType == "guild" {
+	switch importType {
+	case "guild":
 		// Set the guild ID and resource name
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("guild_id"), types.StringValue(guildID))...)
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("name"), types.StringValue(resource))...)
-	} else if importType == "channel" {
+	case "channel":
 		if discord.IsSnowflake(channelID) {
 			resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("channel_id"), types.StringValue(channelID))...)
 		} else {
@@ -378,7 +379,7 @@ func (r *WebhookResource) ImportState(ctx context.Context, req resource.ImportSt
 		}
 
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("name"), types.StringValue(resource))...)
-	} else if importType == "id" {
+	case "id":
 		// Set the resource ID
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), types.StringValue(resource))...)
 	}

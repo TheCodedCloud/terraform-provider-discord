@@ -2,11 +2,11 @@ package role_members
 
 import (
 	"github.com/JustARecord/go-discordutils/base/member"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
 )
 
 // UpdateModel updates the role resource model with the provided role.

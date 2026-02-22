@@ -7,6 +7,13 @@ import (
 	"context"
 	"os"
 
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/channel"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/guild"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/member"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/permissions"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/role"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/role_members"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/webhook"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -15,13 +22,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/channel"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/guild"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/member"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/permissions"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/role"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/role_members"
-	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/webhook"
 )
 
 // Ensure DiscordProvider satisfies various provider interfaces.
@@ -42,7 +42,7 @@ type DiscordProviderModel struct {
 	OAuth2ClientId types.String `tfsdk:"oauth2_client_id"`
 }
 
-// New is a helper function to simplfy provider server and testing implementation.
+// New is a helper function to simplify provider server and testing implementation.
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
 		return &DiscordProvider{
@@ -130,9 +130,8 @@ func (p *DiscordProvider) Configure(ctx context.Context, req provider.ConfigureR
 		)
 	}
 
-	if oauth2_client_id == "" {
-		// todo, this is an optional value, so we should not return an error here.
-	}
+	// oauth2_client_id is optional; reserved for future OAuth2 client use.
+	_ = oauth2_client_id
 
 	if resp.Diagnostics.HasError() {
 		return
