@@ -25,6 +25,7 @@
           pkgs.terraform
           pkgs.opentofu 
           pkgs.tflint
+          pkgs.golangci-lint
         ];
 
         shellHook = ''
