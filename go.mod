@@ -1,4 +1,4 @@
-module github.com/thecodedcloud/terraform-provider-discord
+module github.com/TheCodedCloud/terraform-provider-discord
 
 go 1.23.7
 
