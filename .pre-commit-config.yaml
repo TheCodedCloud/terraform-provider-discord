@@ -1,0 +1,7 @@
+# See https://pre-commit.com for more information
+repos:
+  - repo: https://github.com/tofuutils/pre-commit-opentofu
+    rev: v2.2.2
+    hooks:
+      - id: tofu_tflint
+      - id: tofu_validate
