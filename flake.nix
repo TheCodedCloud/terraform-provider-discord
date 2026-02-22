@@ -6,7 +6,13 @@
   outputs = { self, nixpkgs }: let
     supported = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
     forAllSystems = nixpkgs.lib.genAttrs supported;
-    pkgsFor = system: import nixpkgs { inherit system; };
+    # Terraform 1.14+ is BSL-licensed; allow it explicitly.
+    pkgsFor = system: import nixpkgs {
+      inherit system;
+      config.allowUnfreePredicate = pkg:
+        (nixpkgs.lib.getName pkg) == "terraform" ||
+        nixpkgs.lib.hasPrefix "terraform-" (nixpkgs.lib.getName pkg);
+    };
   in {
     devShells = forAllSystems (system: let
       pkgs = pkgsFor system;
@@ -16,11 +22,13 @@
 
         packages = [
           pkgs.pre-commit
+          pkgs.terraform
           pkgs.opentofu 
           pkgs.tflint
         ];
 
         shellHook = ''
+          echo "Terraform:  $(terraform version)"
           echo "Tofu:       $(tofu version)"
           echo "Pre-commit: $(pre-commit --version)"
           echo ""
