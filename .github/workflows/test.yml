@@ -21,13 +21,14 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    env:
+      GOFLAGS: -mod=vendor
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           go-version-file: 'go.mod'
           cache: true
-      - run: go mod download
       - run: go build -v .
       - name: Run linters
         uses: golangci/golangci-lint-action@aaa42aa0628b4ae2578232a66b541047968fac86 # v6.1.0
@@ -36,6 +37,8 @@ jobs:
 
   generate:
     runs-on: ubuntu-latest
+    env:
+      GOFLAGS: -mod=vendor
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
@@ -60,6 +63,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      GOFLAGS: -mod=vendor
     strategy:
       fail-fast: false
       matrix:
@@ -80,7 +85,6 @@ jobs:
         with:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
-      - run: go mod download
       - env:
           TF_ACC: "1"
         run: go test -v -cover ./internal/provider/
