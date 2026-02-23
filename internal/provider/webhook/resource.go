@@ -163,8 +163,8 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 	// Set the LastUpdated field to the current time.
 	plan.LastUpdated = types.StringValue(common.CurrentTime())
 
-	// Set the Avatar field to the base64 encoded image.
-	plan.Avatar = types.StringValue(result.Avatar)
+	// Set the Avatar using normalized value so create and read are consistent (avoids "inconsistent values for sensitive attribute").
+	plan.Avatar = avatarStateValue(result.Avatar, plan.Avatar.ValueString())
 
 	tflog.Info(ctx, fmt.Sprintf("Updated plan %s %s: %v", resourceMetadataName, resourceMetadataType, plan))
 
@@ -244,6 +244,9 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	// Set the LastUpdated field to the current time.
 	plan.LastUpdated = types.StringValue(common.CurrentTime())
+
+	// Set the Avatar using normalized value so create/read/update are consistent.
+	plan.Avatar = avatarStateValue(result.Avatar, plan.Avatar.ValueString())
 
 	tflog.Info(ctx, fmt.Sprintf("Updated plan %s %s: %v", resourceMetadataName, resourceMetadataType, plan))
 
@@ -463,8 +466,8 @@ func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 		resp.Diagnostics.Append(diags...)
 	}
 
-	// Update the Avatar attribute
-	provided.Avatar = types.StringValue(result.Avatar)
+	// Set the Avatar using normalized value so create and read are consistent (avoids "inconsistent values for sensitive attribute").
+	provided.Avatar = avatarStateValue(result.Avatar, provided.Avatar.ValueString())
 
 	tflog.Info(ctx, fmt.Sprintf("Updated provided %s %s: %v", resourceMetadataName, resourceMetadataType, provided))
 
