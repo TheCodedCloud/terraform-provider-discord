@@ -56,7 +56,6 @@ func (d *WebhookDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 			"avatar": schema.StringAttribute{
 				Description: "The default user avatar hash of the webhook.",
 				Computed:    true,
-				Sensitive:   true, // Marked as sensitive to prevent log spam with large base64 encoded images.
 			},
 			"token": schema.StringAttribute{
 				Description: "The secure token of the webhook (returned for Incoming Webhooks).",

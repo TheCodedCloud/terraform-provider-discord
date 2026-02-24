@@ -17,7 +17,7 @@ description: |-
 
 ### Optional
 
-- `avatar` (String, Sensitive) The default user avatar hash of the webhook.
+- `avatar` (String) The default user avatar hash of the webhook.
 - `channel_id` (String) The channel ID this webhook is for, if any.
 - `guild_id` (String) The guild ID this webhook is for, if any.
 - `id` (String) The ID of the webhook.

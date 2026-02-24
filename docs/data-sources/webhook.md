@@ -25,6 +25,6 @@ description: |-
 ### Read-Only
 
 - `application_id` (String) The Bot/OAuth2 application that created this webhook.
-- `avatar` (String, Sensitive) The default user avatar hash of the webhook.
+- `avatar` (String) The default user avatar hash of the webhook.
 - `token` (String, Sensitive) The secure token of the webhook (returned for Incoming Webhooks).
 - `type` (String) The type of the webhook, either 'INCOMING', 'CHANNEL_FOLLOWER', or 'APPLICATION'.
