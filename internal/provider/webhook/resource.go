@@ -78,12 +78,11 @@ func (r *WebhookResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"avatar": schema.StringAttribute{
-				Description: "The default user avatar hash of the webhook. Pass a data URL or base64 image to set a custom avatar; the stored value is the hash Discord returns.",
+				Description: "The default user avatar hash of the webhook. Pass a data URL or base64 image to set a custom avatar; the stored value is what you send (base64 is preserved in state so the plan stays valid).",
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
-					avatarUnknownIfImageData(),
 				},
 			},
 			"token": schema.StringAttribute{
@@ -163,7 +162,7 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 	// Set the LastUpdated field to the current time.
 	plan.LastUpdated = types.StringValue(common.CurrentTime())
 
-	// Keep avatar in state as what we sent (or the hash when we sent custom data). Do not rely on Discord's response format.
+	// Store exactly what we sent so plan and state match (avoids "invalid plan" / "inconsistent result").
 	plan.Avatar = avatarStateAfterApply(avatar, result.Avatar)
 
 	tflog.Info(ctx, fmt.Sprintf("Updated plan %s %s: %v", resourceMetadataName, resourceMetadataType, plan))
@@ -245,7 +244,7 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 	// Set the LastUpdated field to the current time.
 	plan.LastUpdated = types.StringValue(common.CurrentTime())
 
-	// Keep avatar in state as what we sent (or the hash when we sent custom data). Do not rely on Discord's response format.
+	// Store exactly what we sent so plan and state match.
 	plan.Avatar = avatarStateAfterApply(avatar, result.Avatar)
 
 	tflog.Info(ctx, fmt.Sprintf("Updated plan %s %s: %v", resourceMetadataName, resourceMetadataType, plan))
@@ -466,9 +465,11 @@ func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 		resp.Diagnostics.Append(diags...)
 	}
 
-	// Keep avatar consistent with what we last applied: use state value, normalized so we never return null
-	// (same representation as Create/Update: types.StringValue("") when empty).
-	provided.Avatar = types.StringValue(provided.Avatar.ValueString())
+	// When state contains image data (base64/data URL), keep it so plan continues to match state.
+	// Otherwise refresh from API (hash or "").
+	if !isAvatarImageData(provided.Avatar.ValueString()) {
+		provided.Avatar = types.StringValue(result.Avatar)
+	}
 
 	tflog.Info(ctx, fmt.Sprintf("Updated provided %s %s: %v", resourceMetadataName, resourceMetadataType, provided))
 
