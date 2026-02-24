@@ -78,11 +78,12 @@ func (r *WebhookResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"avatar": schema.StringAttribute{
-				Description: "The default user avatar hash of the webhook. Not marked sensitive to avoid Terraform's strict consistency check when Discord returns a different representation after create vs read.",
+				Description: "The default user avatar hash of the webhook. Pass a data URL or base64 image to set a custom avatar; the stored value is the hash Discord returns.",
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+					avatarUnknownIfImageData(),
 				},
 			},
 			"token": schema.StringAttribute{
