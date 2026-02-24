@@ -78,10 +78,9 @@ func (r *WebhookResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"avatar": schema.StringAttribute{
-				Description: "The default user avatar hash of the webhook.",
+				Description: "The default user avatar hash of the webhook. Not marked sensitive to avoid Terraform's strict consistency check when Discord returns a different representation after create vs read.",
 				Optional:    true,
 				Computed:    true,
-				Sensitive:   true, // Marked as sensitive to prevent log spam with large base64 encoded images.
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -466,9 +465,9 @@ func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 		resp.Diagnostics.Append(diags...)
 	}
 
-	// Do not refresh avatar from Discord: keep the value we last applied so state stays consistent
-	// and we avoid "inconsistent values for sensitive attribute" from Discord's response format.
-	// (provided.Avatar is left unchanged from state.)
+	// Keep avatar consistent with what we last applied: use state value, normalized so we never return null
+	// (same representation as Create/Update: types.StringValue("") when empty).
+	provided.Avatar = types.StringValue(provided.Avatar.ValueString())
 
 	tflog.Info(ctx, fmt.Sprintf("Updated provided %s %s: %v", resourceMetadataName, resourceMetadataType, provided))
 
