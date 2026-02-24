@@ -163,8 +163,8 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 	// Set the LastUpdated field to the current time.
 	plan.LastUpdated = types.StringValue(common.CurrentTime())
 
-	// Set the Avatar using normalized value so create and read are consistent (avoids "inconsistent values for sensitive attribute").
-	plan.Avatar = avatarStateValue(result.Avatar, plan.Avatar.ValueString())
+	// Keep avatar in state as what we sent (or the hash when we sent custom data). Do not rely on Discord's response format.
+	plan.Avatar = avatarStateAfterApply(avatar, result.Avatar)
 
 	tflog.Info(ctx, fmt.Sprintf("Updated plan %s %s: %v", resourceMetadataName, resourceMetadataType, plan))
 
@@ -245,8 +245,8 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 	// Set the LastUpdated field to the current time.
 	plan.LastUpdated = types.StringValue(common.CurrentTime())
 
-	// Set the Avatar using normalized value so create/read/update are consistent.
-	plan.Avatar = avatarStateValue(result.Avatar, plan.Avatar.ValueString())
+	// Keep avatar in state as what we sent (or the hash when we sent custom data). Do not rely on Discord's response format.
+	plan.Avatar = avatarStateAfterApply(avatar, result.Avatar)
 
 	tflog.Info(ctx, fmt.Sprintf("Updated plan %s %s: %v", resourceMetadataName, resourceMetadataType, plan))
 
@@ -466,8 +466,9 @@ func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 		resp.Diagnostics.Append(diags...)
 	}
 
-	// Set the Avatar using normalized value so create and read are consistent (avoids "inconsistent values for sensitive attribute").
-	provided.Avatar = avatarStateValue(result.Avatar, provided.Avatar.ValueString())
+	// Do not refresh avatar from Discord: keep the value we last applied so state stays consistent
+	// and we avoid "inconsistent values for sensitive attribute" from Discord's response format.
+	// (provided.Avatar is left unchanged from state.)
 
 	tflog.Info(ctx, fmt.Sprintf("Updated provided %s %s: %v", resourceMetadataName, resourceMetadataType, provided))
 
