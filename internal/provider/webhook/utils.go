@@ -40,20 +40,16 @@ func UpdateModel(ctx context.Context, webhook *discordgo.Webhook, model, state *
 }
 
 // avatarStateAfterApply returns the value to store in state for avatar after a successful Create or Update.
-// We keep state consistent with what we sent: when we sent no custom avatar (empty), store "";
-// when we sent custom avatar data, store the hash Discord returned. We do not rely on Discord's
-// response format for "no avatar" (e.g. null vs omit vs default hash) so apply always succeeds
-// and state stays consistent.
-func avatarStateAfterApply(sentValue, apiAvatarHash string) types.String {
-	if sentValue == "" {
-		return types.StringValue("")
-	}
-	return types.StringValue(apiAvatarHash)
+// We store exactly what we sent so the plan (config) matches state and Terraform does not report
+// "planned value does not match config value" or "inconsistent result". When the user sends image
+// data (base64/data URL), we keep it in state; when they send "" we store "".
+func avatarStateAfterApply(sentValue, _ string) types.String {
+	return types.StringValue(sentValue)
 }
 
-// isAvatarImageData returns true if the value looks like image payload (data URL or raw base64)
-// that Discord will convert to a hash. We use this in plan modification so the plan shows
-// "(known after apply)" instead of the raw value, avoiding inconsistent result errors.
+// isAvatarImageData returns true if the value looks like image payload (data URL or raw base64).
+// When state contains image data, Read keeps it (we do not overwrite with the hash from the API)
+// so that the next plan still matches state.
 func isAvatarImageData(s string) bool {
 	if s == "" {
 		return false
