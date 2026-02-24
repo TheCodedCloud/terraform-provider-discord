@@ -17,7 +17,7 @@ description: |-
 
 ### Optional
 
-- `avatar` (String) The default user avatar hash of the webhook. Not marked sensitive to avoid Terraform's strict consistency check when Discord returns a different representation after create vs read.
+- `avatar` (String) The default user avatar hash of the webhook. Pass a data URL or base64 image to set a custom avatar; the stored value is the hash Discord returns.
 - `channel_id` (String) The channel ID this webhook is for, if any.
 - `guild_id` (String) The guild ID this webhook is for, if any.
 - `id` (String) The ID of the webhook.
