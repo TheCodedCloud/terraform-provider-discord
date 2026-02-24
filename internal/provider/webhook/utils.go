@@ -50,3 +50,20 @@ func avatarStateAfterApply(sentValue, apiAvatarHash string) types.String {
 	}
 	return types.StringValue(apiAvatarHash)
 }
+
+// isAvatarImageData returns true if the value looks like image payload (data URL or raw base64)
+// that Discord will convert to a hash. We use this in plan modification so the plan shows
+// "(known after apply)" instead of the raw value, avoiding inconsistent result errors.
+func isAvatarImageData(s string) bool {
+	if s == "" {
+		return false
+	}
+	if strings.HasPrefix(s, "data:") {
+		return true
+	}
+	// Discord accepts raw base64; hashes are short hex-like strings (e.g. 32 chars).
+	if len(s) > 64 {
+		return true
+	}
+	return false
+}
