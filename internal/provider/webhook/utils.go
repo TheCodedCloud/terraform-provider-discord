@@ -39,13 +39,14 @@ func UpdateModel(ctx context.Context, webhook *discordgo.Webhook, model, state *
 	return nil
 }
 
-// avatarStateValue returns the value to store in Terraform state for the avatar attribute.
-// Discord can return different representations for "no custom avatar" between create and read
-// (e.g. omit vs null, or a default hash). We normalize so create and read always produce
-// the same value and avoid "inconsistent values for sensitive attribute" errors.
-func avatarStateValue(apiAvatar, configuredOrStoredAvatar string) types.String {
-	if configuredOrStoredAvatar == "" {
+// avatarStateAfterApply returns the value to store in state for avatar after a successful Create or Update.
+// We keep state consistent with what we sent: when we sent no custom avatar (empty), store "";
+// when we sent custom avatar data, store the hash Discord returned. We do not rely on Discord's
+// response format for "no avatar" (e.g. null vs omit vs default hash) so apply always succeeds
+// and state stays consistent.
+func avatarStateAfterApply(sentValue, apiAvatarHash string) types.String {
+	if sentValue == "" {
 		return types.StringValue("")
 	}
-	return types.StringValue(apiAvatar)
+	return types.StringValue(apiAvatarHash)
 }
