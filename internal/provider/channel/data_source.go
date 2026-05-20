@@ -92,8 +92,16 @@ func (d *ChannelDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 				Description: "The ID of the parent category for a channel.",
 				Computed:    true,
 			},
+			"read_children": schema.BoolAttribute{
+				Description: "When true (default), fetch child channels for category channels on read. Set to false to skip listing guild channels.",
+				Optional:    true,
+			},
+			"children_type": schema.StringAttribute{
+				Description: `What to return in children: "ids" (default) or "names". Both are ordered by Discord position.`,
+				Optional:    true,
+			},
 			"children": schema.ListAttribute{
-				Description: "The IDs of the child channels of the category, if the channel is a category.",
+				Description: `Child channel IDs or names under this category (see children_type), in Discord sidebar order. Null when read_children is false.`,
 				Computed:    true,
 				ElementType: types.StringType,
 			},
@@ -208,18 +216,6 @@ func (d *ChannelDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	children, err := channel.FetchChildren(ctx, d.client, guild_id, result)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Failed to get children for %s", datasourceMetadataName),
-			err.Error(),
-		)
-	}
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	flags := discord.ListStringify(result.Flags)
 
 	flagsList, diags := common.ToListType[string, basetypes.StringType](flags)
@@ -228,9 +224,8 @@ func (d *ChannelDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	appliedTags, diags := common.ToListType[string, basetypes.StringType](result.AppliedTags)
 	resp.Diagnostics.Append(diags...)
 
-	childrenIDs := channel.Names(children)
-	childrenList, diags := common.ToListType[string, basetypes.StringType](childrenIDs)
-	resp.Diagnostics.Append(diags...)
+	childrenList, childDiags := childrenListForCategory(ctx, d.client, guild_id, result, provided.ReadChildren, provided.ChildrenType)
+	resp.Diagnostics.Append(childDiags...)
 
 	// availableTags, diags := common.ToListType(channel.AvailableTags)
 	// resp.Diagnostics.Append(diags...)
@@ -258,6 +253,8 @@ func (d *ChannelDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		ApplicationID:    types.StringValue(result.ApplicationID),
 		// Managed:                       types.BoolValue(channel.Managed),
 		ParentID:         types.StringValue(result.ParentID),
+		ReadChildren:     provided.ReadChildren,
+		ChildrenType:     provided.ChildrenType,
 		Children:         childrenList,
 		LastPinTimestamp: types.StringValue(common.StrDiscordTime(result.LastPinTimestamp, "ISO8601")),
 		// ThreadMetadata:   threadMetadata,
