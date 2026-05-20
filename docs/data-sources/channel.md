@@ -21,15 +21,17 @@ description: |-
 
 ### Optional
 
+- `children_type` (String) What to return in children: "ids" (default) or "names". Both are ordered by Discord position.
 - `id` (String) The ID of the channel.
 - `name` (String) The name of the channel.
+- `read_children` (Boolean) When true (default), fetch child channels for category channels on read. Set to false to skip listing guild channels.
 
 ### Read-Only
 
 - `application_id` (String) ApplicationID of the DM creator Zeroed if guild channel or not a bot user
 - `applied_tags` (List of String) The IDs of the set of tags that have been applied to a thread in a forum channel.
 - `bitrate` (Number) The bitrate of the channel, if it is a voice channel.
-- `children` (List of String) The IDs of the child channels of the category, if the channel is a category.
+- `children` (List of String) Child channel IDs or names under this category (see children_type), in Discord sidebar order. Null when read_children is false.
 - `default_forum_layout` (String) The default layout of threads in the channel.
 - `default_sort_order` (String) The default sort order of threads in the channel.
 - `default_thread_rate_limit_per_user` (Number) Amount of seconds a user has to wait before sending another message in a thread (0-21600)
