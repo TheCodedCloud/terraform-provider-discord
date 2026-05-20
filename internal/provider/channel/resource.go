@@ -19,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -146,8 +145,16 @@ func (r *ChannelResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"read_children": schema.BoolAttribute{
+				Description: "When true (default), fetch child channels for category channels on read. Set to false to skip listing guild channels.",
+				Optional:    true,
+			},
+			"children_type": schema.StringAttribute{
+				Description: `What to return in children: "ids" (default) or "names". Both are ordered by Discord position.`,
+				Optional:    true,
+			},
 			"children": schema.ListAttribute{
-				Description: "The IDs of the child channels of the category, if the channel is a category.",
+				Description: `Child channel IDs or names under this category (see children_type), in Discord sidebar order. Null when read_children is false.`,
 				Computed:    true,
 				ElementType: types.StringType,
 				PlanModifiers: []planmodifier.List{
@@ -277,26 +284,12 @@ func (r *ChannelResource) Create(ctx context.Context, req resource.CreateRequest
 		resp.Diagnostics.Append(diags...)
 	}
 
-	children, err := channel.FetchChildren(ctx, r.client, plan.GuildID.ValueString(), result)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Failed to get children for %s", resourceMetadataName),
-			err.Error(),
-		)
-	}
-
+	childrenList, childDiags := childrenListForCategory(ctx, r.client, plan.GuildID.ValueString(), result, plan.ReadChildren, plan.ChildrenType)
+	resp.Diagnostics.Append(childDiags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	childrenIDs := channel.Names(children)
-	childrenList, diags := common.ToListType[string, basetypes.StringType](childrenIDs)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Set the children
 	plan.Children = childrenList
 
 	// Set the LastUpdated field to the current time.
@@ -377,26 +370,12 @@ func (r *ChannelResource) Update(ctx context.Context, req resource.UpdateRequest
 		resp.Diagnostics.Append(diags...)
 	}
 
-	children, err := channel.FetchChildren(ctx, r.client, plan.GuildID.ValueString(), result)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Failed to get children for %s", resourceMetadataName),
-			err.Error(),
-		)
-	}
-
+	childrenList, childDiags := childrenListForCategory(ctx, r.client, plan.GuildID.ValueString(), result, plan.ReadChildren, plan.ChildrenType)
+	resp.Diagnostics.Append(childDiags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	childrenIDs := channel.Names(children)
-	childrenList, diags := common.ToListType[string, basetypes.StringType](childrenIDs)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Set the children
 	plan.Children = childrenList
 
 	// Set the LastUpdated field to the current time.
@@ -580,26 +559,12 @@ func (r *ChannelResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	children, err := channel.FetchChildren(ctx, r.client, state.GuildID.ValueString(), result)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Failed to get children for %s", resourceMetadataName),
-			err.Error(),
-		)
-	}
-
+	childrenList, childDiags := childrenListForCategory(ctx, r.client, state.GuildID.ValueString(), result, state.ReadChildren, state.ChildrenType)
+	resp.Diagnostics.Append(childDiags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	childrenIDs := channel.Names(children)
-	childrenList, diags := common.ToListType[string, basetypes.StringType](childrenIDs)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Set the children
 	state.Children = childrenList
 
 	// Revert last_updated to the plan value
