@@ -63,7 +63,13 @@ type ChannelDataSourceModel struct {
 	// The ID of the parent channel, if the channel is under a category. For threads - id of the channel thread was created in.
 	ParentID types.String `tfsdk:"parent_id"`
 
-	// The IDs of the child channels of the category, if the channel is a category.
+	// When true (default), populate children for category channels by listing guild channels.
+	ReadChildren types.Bool `tfsdk:"read_children"`
+
+	// What to return in children: "ids" (default) or "names".
+	ChildrenType types.String `tfsdk:"children_type"`
+
+	// Child channel IDs or names under this category (see children_type), in Discord sidebar order.
 	Children types.List `tfsdk:"children"`
 
 	// The timestamp of the last pinned message in the channel.
