@@ -14,16 +14,18 @@ func setupParams(model *ChannelResourceModel) *discordgo.ChannelEdit {
 	parentID := model.ParentID.ValueString()
 	topic := model.Topic.ValueString()
 
-	// Optional parameters
 	nsfw := model.NSFW.ValueBool()
-	position := int(model.Position.ValueInt32())
 
 	params := &discordgo.ChannelEdit{
 		Name:     name,
 		ParentID: parentID,
 		Topic:    topic,
 		NSFW:     &nsfw,
-		Position: &position,
+	}
+
+	if !model.Position.IsNull() && !model.Position.IsUnknown() {
+		position := int(model.Position.ValueInt32())
+		params.Position = &position
 	}
 
 	// Set optional parameters
