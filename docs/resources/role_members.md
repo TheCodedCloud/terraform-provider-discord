@@ -3,7 +3,7 @@
 page_title: "discord_role_members Resource - discord"
 subcategory: ""
 description: |-
-  Manages a Discord role's membership as an explicit, declared list. Does not require the GUILD_MEMBERS privileged intent: every read and write checks only the members declared in this resource's config (past and present), one at a time, via Discord's ungated per-member endpoints. This is a deliberate narrowing of scope from an earlier version of this resource, which enumerated the whole guild's role membership on every read. The consequence: a user granted this role by some other means outside this resource — the Discord UI, another tool — is invisible to this resource and will never be added to state or removed on the next apply. Only members that have, at some point, appeared in this resource's `members` list are ever checked or reconciled.
+  Manages a Discord role's membership as an explicit, declared list. Does not require the GUILD_MEMBERS privileged intent: every read and write checks only the members declared in this resource's config (past and present), one at a time, via Discord's ungated per-member endpoints. This is a deliberate narrowing of scope from an earlier version of this resource, which enumerated the whole guild's role membership on every read. The consequence: a user granted this role by some other means outside this resource — the Discord UI, another tool — is invisible to this resource and will never be added to state or removed on the next apply. Only members that have, at some point, appeared in this resource's members list are ever checked or reconciled.
 ---
 
 # discord_role_members (Resource)
