@@ -27,8 +27,28 @@ func (d *RoleMembersDataSource) Metadata(_ context.Context, req datasource.Metad
 }
 
 // Schema defines the schema for the data source.
+//
+// Requires GUILD_MEMBERS: unlike the discord_role_members resource (which was
+// changed to check only declared members via the ungated single-member
+// endpoint — see internal/provider/discordmembers), this data source has no
+// declared-set input to check against. Its only contract is "who in the whole
+// guild holds this role," which Discord can only answer via the gated List
+// Guild Members endpoint (there is no by-role listing endpoint at any
+// privilege level). If the bot application does not have GUILD_MEMBERS
+// enabled, Read on this data source will fail with a 403 — that is expected,
+// not a bug, and there is currently no ungated way to fix it. See
+// docs/PRIVILEGED_INTENTS.md in this repo, and
+// docs/data-sources/role_members.md, for the fuller explanation.
 func (d *RoleMembersDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Reads the members of a Discord role by enumerating the guild's full member " +
+			"list and filtering by role. Requires the GUILD_MEMBERS privileged intent to be " +
+			"enabled on the bot application's Developer Portal entry — this is a REST requirement " +
+			"of Discord's List Guild Members endpoint, not a gateway/websocket concern, and it " +
+			"applies even though this provider never opens a gateway connection. There is no " +
+			"Discord endpoint that lists members by role directly, so unlike the " +
+			"discord_role_members resource, this data source cannot avoid the gated endpoint by " +
+			"checking only declared members.",
 		Attributes: map[string]schema.Attribute{
 			"guild_id": schema.StringAttribute{
 				Description: "The ID of the guild.",
@@ -45,7 +65,8 @@ func (d *RoleMembersDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 				Computed:    true,
 			},
 			"members": schema.ListAttribute{
-				Description: "Array of role members",
+				Description: "Array of role members. Populating this requires the GUILD_MEMBERS " +
+					"privileged intent — see the data source description above.",
 				Computed:    true,
 				ElementType: types.StringType,
 			},

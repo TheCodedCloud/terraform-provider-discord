@@ -9,6 +9,7 @@ import (
 	"github.com/JustARecord/go-discordutils/base/role"
 	discord "github.com/JustARecord/go-discordutils/utils"
 	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/discordmembers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -34,6 +35,16 @@ func (r *RoleMembersResource) Metadata(_ context.Context, req resource.MetadataR
 // Schema defines the schema for the resource.
 func (r *RoleMembersResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Manages a Discord role's membership as an explicit, declared list. Does not " +
+			"require the GUILD_MEMBERS privileged intent: every read and write checks only the " +
+			"members declared in this resource's config (past and present), one at a time, via " +
+			"Discord's ungated per-member endpoints. This is a deliberate narrowing of scope from " +
+			"an earlier version of this resource, which enumerated the whole guild's role " +
+			"membership on every read. The consequence: a user granted this role by some other " +
+			"means outside this resource — the Discord UI, another tool — is invisible to this " +
+			"resource and will never be added to state or removed on the next apply. Only members " +
+			"that have, at some point, appeared in this resource's `members` list are ever checked " +
+			"or reconciled.",
 		Attributes: map[string]schema.Attribute{
 			"guild_id": schema.StringAttribute{
 				Description: "The ID of the guild.",
@@ -159,27 +170,18 @@ func (r *RoleMembersResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	// Fetch the members
-	members, err := guild.FetchMembersByName(ctx, r.client, result_guild, members_names)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Failed to get members for %s", resourceMetadataName),
-			err.Error(),
-		)
-	}
+	// Resolve the declared members by username (Search Guild Members, ungated).
+	members, memberDiags := discordmembers.ResolveMembersByUsername(ctx, discordmembers.NewSessionMemberClient(r.client), guild_id, members_names)
+	resp.Diagnostics.Append(memberDiags...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Create the resource
-	result, err := role.SetMembers(ctx, r.client, result_guild, result_role, members)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Failed to create %s", resourceMetadataName),
-			err.Error(),
-		)
-	}
+	// Create the resource. No prior declared members exist yet, so there is
+	// nothing to check for removal — only additions.
+	result, syncDiags := discordmembers.SyncDeclaredMembers(ctx, r.client, result_guild, result_role, nil, members)
+	resp.Diagnostics.Append(syncDiags...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -245,11 +247,25 @@ func (r *RoleMembersResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	members_names := []string{}
+	desired_names := []string{}
 
-	// Set the members
+	// Set the desired members
 	if !plan.Members.IsNull() {
-		members_names, diags = common.FromListType(ctx, plan.Members)
+		desired_names, diags = common.FromListType(ctx, plan.Members)
+
+		resp.Diagnostics.Append(diags...)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	previous_names := []string{}
+
+	// Set the previously-declared members (as of the last apply), so removals
+	// can be detected — see SyncDeclaredMembers.
+	if !state.Members.IsNull() {
+		previous_names, diags = common.FromListType(ctx, state.Members)
 
 		resp.Diagnostics.Append(diags...)
 	}
@@ -298,27 +314,26 @@ func (r *RoleMembersResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	// Fetch the members
-	members, err := guild.FetchMembersByName(ctx, r.client, result_guild, members_names)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Failed to get members for %s", resourceMetadataName),
-			err.Error(),
-		)
+	// Resolve the desired and previously-declared members by username (Search
+	// Guild Members, ungated). Both are needed: desired to know who should end
+	// up holding the role, previous to know who to check for removal.
+	desiredMembers, desiredDiags := discordmembers.ResolveMembersByUsername(ctx, discordmembers.NewSessionMemberClient(r.client), guild_id, desired_names)
+	resp.Diagnostics.Append(desiredDiags...)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
+
+	previousMembers, previousDiags := discordmembers.ResolveMembersByUsername(ctx, discordmembers.NewSessionMemberClient(r.client), guild_id, previous_names)
+	resp.Diagnostics.Append(previousDiags...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Update the resource
-	result, err := role.SetMembers(ctx, r.client, result_guild, result_role, members)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Failed to update %s", resourceMetadataName),
-			err.Error(),
-		)
-	}
+	result, syncDiags := discordmembers.SyncDeclaredMembers(ctx, r.client, result_guild, result_role, previousMembers, desiredMembers)
+	resp.Diagnostics.Append(syncDiags...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -432,14 +447,10 @@ func (r *RoleMembersResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	// Fetch the members
-	members, err := guild.FetchMembersByName(ctx, r.client, result_guild, members_names)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Failed to get members for %s", resourceMetadataName),
-			err.Error(),
-		)
-	}
+	// Resolve the declared members by username (Search Guild Members, ungated)
+	// so we know whose role to remove.
+	members, memberDiags := discordmembers.ResolveMembersByUsername(ctx, discordmembers.NewSessionMemberClient(r.client), guild_id, members_names)
+	resp.Diagnostics.Append(memberDiags...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -561,13 +572,32 @@ func (r *RoleMembersResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
+	// Resolve the members declared as of the last apply, so we can check which
+	// of them currently hold the role (see FetchDeclaredHolders) — the ungated
+	// replacement for enumerating the whole guild's role membership.
+	declared_names := []string{}
+	if !provided.Members.IsNull() {
+		declared_names, diags = common.FromListType(ctx, provided.Members)
+		resp.Diagnostics.Append(diags...)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	declaredMembers, resolveDiags := discordmembers.ResolveMembersByUsername(ctx, discordmembers.NewSessionMemberClient(r.client), guild_id, declared_names)
+	resp.Diagnostics.Append(resolveDiags...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Read the resource
-	result, err := role.FetchMembers(ctx, r.client, result_guild.ID, result_role.ID)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Failed to read %s", resourceMetadataName),
-			err.Error(),
-		)
+	result, holderDiags := discordmembers.FetchDeclaredHolders(ctx, discordmembers.NewSessionMemberClient(r.client), result_guild.ID, result_role.ID, declaredMembers)
+	resp.Diagnostics.Append(holderDiags...)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	tflog.Info(ctx, fmt.Sprintf("Reading provided %s %s: %v", resourceMetadataName, resourceMetadataType, provided))
