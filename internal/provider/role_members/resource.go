@@ -495,10 +495,10 @@ func (r *RoleMembersResource) ImportState(ctx context.Context, req resource.Impo
 	// Check if the role part is an ID or a name
 	// If ID is a snowflake, it's an ID
 	if discord.IsSnowflake(resourcePart) {
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), types.StringValue(resourcePart))...)
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("role_id"), types.StringValue(resourcePart))...)
 	} else {
 		// Otherwise, it's a name
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("name"), types.StringValue(resourcePart))...)
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("role"), types.StringValue(resourcePart))...)
 	}
 }
 
