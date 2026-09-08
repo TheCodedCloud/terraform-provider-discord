@@ -3,12 +3,12 @@
 page_title: "discord_role_members Data Source - discord"
 subcategory: ""
 description: |-
-  
+  Reads the members of a Discord role by enumerating the guild's full member list and filtering by role. Requires the GUILD_MEMBERS privileged intent to be enabled on the bot application's Developer Portal entry — this is a REST requirement of Discord's List Guild Members endpoint, not a gateway/websocket concern, and it applies even though this provider never opens a gateway connection. There is no Discord endpoint that lists members by role directly, so unlike the discord_role_members resource, this data source cannot avoid the gated endpoint by checking only declared members.
 ---
 
 # discord_role_members (Data Source)
 
-
+Reads the members of a Discord role by enumerating the guild's full member list and filtering by role. Requires the GUILD_MEMBERS privileged intent to be enabled on the bot application's Developer Portal entry — this is a REST requirement of Discord's List Guild Members endpoint, not a gateway/websocket concern, and it applies even though this provider never opens a gateway connection. There is no Discord endpoint that lists members by role directly, so unlike the discord_role_members resource, this data source cannot avoid the gated endpoint by checking only declared members.
 
 
 
@@ -26,4 +26,4 @@ description: |-
 
 ### Read-Only
 
-- `members` (List of String) Array of role members
+- `members` (List of String) Array of role members. Populating this requires the GUILD_MEMBERS privileged intent — see the data source description above.

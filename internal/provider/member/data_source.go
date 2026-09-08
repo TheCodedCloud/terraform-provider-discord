@@ -8,6 +8,7 @@ import (
 	"github.com/JustARecord/go-discordutils/base/role"
 	discord "github.com/JustARecord/go-discordutils/utils"
 	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/common"
+	"github.com/TheCodedCloud/terraform-provider-discord/internal/provider/discordmembers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -144,11 +145,26 @@ func (d *MemberDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	var result *discordgo.Member
 	var err error
 
-	// Fetch data from the Discord client
+	// Fetch data from the Discord client. The username path resolves via
+	// Search Guild Members (ungated) rather than go-discordutils's
+	// member.FetchByName, which paginates the gated List Guild Members
+	// endpoint — see internal/provider/discordmembers for why.
 	if id != "" {
 		result, err = member.FetchById(ctx, d.client, guild_id, id)
 	} else if username != "" {
-		result, err = member.FetchByName(ctx, d.client, guild_id, username)
+		resolved, resolveDiags := discordmembers.ResolveMembersByUsername(ctx, discordmembers.NewSessionMemberClient(d.client), guild_id, []string{username})
+		resp.Diagnostics.Append(resolveDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		if len(resolved) == 0 {
+			resp.Diagnostics.AddError(
+				fmt.Sprintf("Failed to get %s", datasourceMetadataName),
+				fmt.Sprintf("No guild member with username %q was found.", username),
+			)
+			return
+		}
+		result = resolved[0]
 	} else {
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Invalid %s Configuration", datasourceMetadataType),
